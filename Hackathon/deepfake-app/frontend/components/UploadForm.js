@@ -6,7 +6,8 @@ export default function UploadForm({ onResult }) {
   const [error, setError] = useState(null)
   const [preview, setPreview] = useState(null)
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  // Use local Next.js serverless API by default (works on Vercel when deployed)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0]
@@ -26,14 +27,14 @@ export default function UploadForm({ onResult }) {
     setError(null)
     if (!file) return setError('Please select an image file')
 
-    const form = new FormData()
-    form.append('file', file)
-
+    // Send a base64 data URL to the Next.js API route to avoid multipart parsing
     try {
       setLoading(true)
-      const res = await fetch(`${apiUrl}/predict`, {
+      const body = JSON.stringify({ image: preview })
+      const res = await fetch(`${apiUrl}/api/predict`, {
         method: 'POST',
-        body: form,
+        headers: { 'Content-Type': 'application/json' },
+        body,
       })
       if (!res.ok) {
         const txt = await res.text()
